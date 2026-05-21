@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f1923">
+<title>Umpire Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1923;
+  --bg2: #162030;
+  --bg3: #1e2d3d;
+  --bg4: #243446;
+  --line: rgba(255,255,255,0.08);
+  --line2: rgba(255,255,255,0.15);
+  --text: #e8edf2;
+  --text2: #7a9bb5;
+  --text3: #4a6a85;
+  --accent: #f0a500;
+  --accent2: #c07d00;
+  --green: #2ecc71;
+  --red: #e74c3c;
+  --blue: #3498db;
+  --blue2: #1a5a8a;
+  --warn: #f39c12;
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Barlow', sans-serif; font-size: 16px; overflow: hidden; }
+.mono { font-family: 'DM Mono', monospace; }
+.cond { font-family: 'Barlow Condensed', sans-serif; }
+
+/* ── APP SHELL ── */
+#app { height: 100vh; display: flex; flex-direction: column; max-width: 480px; margin: 0 auto; position: relative; }
+.screen { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 16px 14px 80px; display: none; }
+.screen.active { display: block; }
+
+/* ── BOTTOM NAV ── */
+.nav { position: absolute; bottom: 0; left: 0; right: 0; height: 64px; background: var(--bg2); border-top: 1px solid var(--line); display: flex; align-items: stretch; z-index: 100; }
+.nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: none; border: none; color: var(--text3); font-family: 'Barlow', sans-serif; font-size: 11px; cursor: pointer; transition: color 0.15s; padding: 8px 4px; }
+.nav-btn svg { width: 22px; height: 22px; }
+.nav-btn.active { color: var(--accent); }
+.nav-btn.active svg { filter: drop-shadow(0 0 4px var(--accent)); }
+
+/* ── HEADER ── */
+.hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.hdr-title { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: 0.04em; color: var(--text); }
+.hdr-sub { font-size: 13px; color: var(--text2); }
+
+/* ── CARDS ── */
+.card { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; }
+.card-label { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.1em; color: var(--text3); text-transform: uppercase; margin-bottom: 10px; }
+
+/* ── BUTTONS ── */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; border-radius: var(--radius-sm); border: 1px solid var(--line2); background: var(--bg3); color: var(--text); font-family: 'Barlow', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.15s, transform 0.1s; }
+.btn:active { transform: scale(0.96); }
+.btn:hover { background: var(--bg4); }
+.btn-accent { background: var(--accent); color: #0f1923; border-color: var(--accent); font-weight: 600; }
+.btn-accent:hover { background: var(--accent2); border-color: var(--accent2); }
+.btn-green { background: rgba(46,204,113,0.15); color: var(--green); border-color: rgba(46,204,113,0.3); }
+.btn-green:hover { background: rgba(46,204,113,0.25); }
+.btn-red { background: rgba(231,76,60,0.15); color: var(--red); border-color: rgba(231,76,60,0.3); }
+.btn-red:hover { background: rgba(231,76,60,0.25); }
+.btn-blue { background: rgba(52,152,219,0.15); color: var(--blue); border-color: rgba(52,152,219,0.3); }
+.btn-block { width: 100%; }
+.btn-sm { padding: 7px 12px; font-size: 13px; }
+.btn-icon { width: 42px; height: 42px; padding: 0; border-radius: 50%; }
+.btn-icon-sm { width: 34px; height: 34px; padding: 0; border-radius: 50%; font-size: 16px; }
+
+/* ── INPUTS ── */
+.input { width: 100%; background: var(--bg3); border: 1px solid var(--line2); border-radius: var(--radius-sm); padding: 10px 14px; color: var(--text); font-family: 'Barlow', sans-serif; font-size: 15px; outline: none; }
+.input:focus { border-color: var(--accent); }
+.input::placeholder { color: var(--text3); }
+textarea.input { resize: vertical; min-height: 80px; }
+label.lbl { display: block; font-size: 13px; color: var(--text2); margin-bottom: 5px; }
+
+/* ── BADGE ── */
+.badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.04em; }
+.badge-accent { background: rgba(240,165,0,0.18); color: var(--accent); border: 1px solid rgba(240,165,0,0.3); }
+.badge-green { background: rgba(46,204,113,0.15); color: var(--green); border: 1px solid rgba(46,204,113,0.3); }
+.badge-red { background: rgba(231,76,60,0.15); color: var(--red); border: 1px solid rgba(231,76,60,0.3); }
+.badge-blue { background: rgba(52,152,219,0.15); color: var(--blue); border: 1px solid rgba(52,152,219,0.3); }
+.badge-gray { background: var(--bg3); color: var(--text2); border: 1px solid var(--line); }
+
+/* ── DIVIDER ── */
+.divider { height: 1px; background: var(--line); margin: 12px 0; }
+
+/* ── FLEX UTILS ── */
+.row { display: flex; align-items: center; gap: 8px; }
+.row-between { display: flex; align-items: center; justify-content: space-between; }
+.col { display: flex; flex-direction: column; gap: 8px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+/* ══════════════════════════════
+   HISTORY SCREEN
+══════════════════════════════ */
+.game-card { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.15s; }
+.game-card:hover { border-color: var(--line2); }
+.game-card.active-game { border-color: var(--accent); }
+.game-date { font-size: 12px; color: var(--text3); font-family: 'DM Mono', monospace; margin-bottom: 6px; }
+.game-teams { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; letter-spacing: 0.03em; margin-bottom: 6px; }
+.game-score-big { font-family: 'DM Mono', monospace; font-size: 28px; font-weight: 500; letter-spacing: 0.05em; }
+.score-sep { color: var(--text3); margin: 0 8px; }
+.empty-state { text-align: center; padding: 48px 16px; color: var(--text3); }
+.empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
+.empty-title { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+.empty-sub { font-size: 14px; }
+
+/* ══════════════════════════════
+   SETUP SCREEN
+══════════════════════════════ */
+.setup-logo { text-align: center; padding: 20px 0 24px; }
+.setup-logo-text { font-family: 'Barlow Condensed', sans-serif; font-size: 36px; font-weight: 700; letter-spacing: 0.06em; color: var(--accent); }
+.setup-logo-sub { font-size: 13px; color: var(--text3); letter-spacing: 0.05em; margin-top: 2px; }
+
+/* ══════════════════════════════
+   GAME SCREEN
+══════════════════════════════ */
+.game-hdr { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 10px; }
+.game-hdr-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.team-vs { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: 0.03em; }
+.score-display { font-family: 'DM Mono', monospace; font-size: 28px; font-weight: 500; }
+
+/* inning half toggle */
+.half-toggle { display: flex; background: var(--bg3); border-radius: var(--radius-sm); border: 1px solid var(--line); overflow: hidden; }
+.half-opt { flex: 1; padding: 7px 12px; text-align: center; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 600; letter-spacing: 0.05em; color: var(--text3); background: none; border: none; cursor: pointer; transition: all 0.15s; }
+.half-opt.on { background: var(--accent); color: #0f1923; }
+
+/* pitch dots */
+.dots-row { display: flex; gap: 10px; align-items: center; margin: 8px 0; }
+.dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line2); background: transparent; transition: background 0.15s, border-color 0.15s; }
+.dot.used-pitch { background: var(--red); border-color: var(--red); box-shadow: 0 0 6px rgba(231,76,60,0.4); }
+.dot.used-out { background: var(--red); border-color: var(--red); box-shadow: 0 0 6px rgba(231,76,60,0.4); }
+
+/* base diamond */
+.diamond-wrap { display: flex; justify-content: center; padding: 8px 0; }
+.diamond { position: relative; width: 130px; height: 130px; }
+.base-sq { position: absolute; width: 30px; height: 30px; border: 2.5px solid var(--line2); transform: rotate(45deg); cursor: pointer; transition: background 0.15s, border-color 0.15s, box-shadow 0.15s; border-radius: 3px; }
+.base-sq.on { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 10px rgba(240,165,0,0.5); }
+.base-sq:hover { border-color: var(--accent); }
+.b1 { right: 0; top: 50%; margin-top: -15px; }
+.b2 { left: 50%; margin-left: -15px; top: 0; }
+.b3 { left: 0; top: 50%; margin-top: -15px; }
+.bh { left: 50%; margin-left: -13px; bottom: 0; width: 26px; height: 26px; background: var(--bg4); border: 2px solid var(--line2); transform: rotate(45deg); border-radius: 2px; }
+.pitcher { position: absolute; top: 50%; left: 50%; margin: -8px 0 0 -8px; width: 16px; height: 16px; border-radius: 50%; background: var(--bg4); border: 1.5px solid var(--line2); }
+.base-lbl { text-align: center; font-size: 12px; color: var(--text3); margin-top: 4px; }
+
+/* batter row */
+.batter-block { background: var(--bg3); border-radius: var(--radius-sm); padding: 10px 14px; border-left: 3px solid var(--accent); }
+.batter-name { font-size: 18px; font-weight: 500; }
+.batter-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
+
+/* mercy banner */
+.mercy-banner { background: rgba(243,156,18,0.12); border: 1px solid rgba(243,156,18,0.35); border-radius: var(--radius-sm); padding: 9px 14px; font-size: 13px; font-weight: 500; color: var(--warn); text-align: center; margin-bottom: 10px; display: none; }
+
+/* big counter */
+.big-counter { font-family: 'DM Mono', monospace; font-size: 48px; font-weight: 500; line-height: 1; }
+
+/* score adj row */
+.score-adj-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.score-adj-row:last-child { border-bottom: none; }
+.score-team { flex: 1; font-size: 15px; font-weight: 500; }
+.score-num { font-family: 'DM Mono', monospace; font-size: 26px; font-weight: 500; width: 40px; text-align: center; }
+
+/* inning grid */
+.inning-grid { overflow-x: auto; }
+.igrid-table { border-collapse: collapse; font-family: 'DM Mono', monospace; font-size: 12px; min-width: 100%; }
+.igrid-table th { padding: 5px 6px; color: var(--text3); font-weight: 400; text-align: center; border-bottom: 1px solid var(--line); }
+.igrid-table td { padding: 5px 6px; text-align: center; color: var(--text2); border-bottom: 1px solid var(--line); }
+.igrid-table td.team-col { text-align: left; color: var(--text); font-family: 'Barlow', sans-serif; font-size: 13px; white-space: nowrap; max-width: 80px; overflow: hidden; text-overflow: ellipsis; }
+.igrid-table td.total { color: var(--accent); font-weight: 500; }
+.igrid-table td.cur-inn { background: rgba(240,165,0,0.08); color: var(--accent); }
+
+/* player list */
+.player-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.player-row:last-child { border-bottom: none; }
+.player-ord { width: 24px; font-size: 12px; font-family: 'DM Mono', monospace; color: var(--text3); text-align: right; flex-shrink: 0; }
+.player-nm { flex: 1; font-size: 15px; }
+.player-nm.up { color: var(--accent); font-weight: 500; }
+
+/* toast */
+.toast { position: fixed; bottom: 76px; left: 50%; transform: translateX(-50%); background: #1e2d3d; border: 1px solid var(--line2); color: var(--text); padding: 9px 20px; border-radius: 20px; font-size: 14px; opacity: 0; transition: opacity 0.25s; pointer-events: none; z-index: 999; white-space: nowrap; max-width: 90vw; text-align: center; }
+.toast.show { opacity: 1; }
+
+/* modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal-box { background: var(--bg2); border: 1px solid var(--line2); border-radius: var(--radius) var(--radius) 0 0; padding: 24px 20px; width: 100%; max-width: 480px; transform: translateY(100%); transition: transform 0.25s cubic-bezier(0.32,0.72,0,1); max-height: 80vh; overflow-y: auto; }
+.modal-overlay.open .modal-box { transform: translateY(0); }
+.modal-title { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; letter-spacing: 0.04em; margin-bottom: 16px; }
+
+/* photo scan area */
+.scan-area { border: 2px dashed var(--line2); border-radius: var(--radius); padding: 24px; text-align: center; cursor: pointer; transition: border-color 0.15s; }
+.scan-area:hover { border-color: var(--accent); }
+.scan-area input { display: none; }
+
+/* util */
+.mt8 { margin-top: 8px; }
+.mt12 { margin-top: 12px; }
+.mt16 { margin-top: 16px; }
+.mb8 { margin-bottom: 8px; }
+.text-center { text-align: center; }
+.text-sm { font-size: 13px; }
+.text-muted { color: var(--text2); }
+.text-dim { color: var(--text3); }
+.gap12 { gap: 12px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ══ HISTORY SCREEN ══ -->
+  <div id="s-history" class="screen active" style="padding-top:20px">
+    <div class="hdr">
+      <div>
+        <div class="hdr-title cond">⚾ Umpire Tool</div>
+        <div class="hdr-sub">Game history</div>
+      </div>
+      <button class="btn btn-accent btn-sm" onclick="showSetup()">+ New game</button>
+    </div>
+    <div id="history-list"></div>
+  </div>
+
+  <!-- ══ SETUP SCREEN ══ -->
+  <div id="s-setup" class="screen">
+    <div class="setup-logo">
+      <div class="setup-logo-text">⚾ UMPIRE</div>
+      <div class="setup-logo-sub">SOFTBALL · SELF-PITCH · 7 INNINGS</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Teams</div>
+      <div class="col">
+        <div>
+          <label class="lbl">Home team name</label>
+          <input class="input" id="setup-home" placeholder="Home team" maxlength="30">
+        </div>
+        <div>
+          <label class="lbl">Away team name</label>
+          <input class="input" id="setup-away" placeholder="Away team" maxlength="30">
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label">Batting lineups</div>
+      <div class="text-sm text-muted mb8">One player per line. You can also add players during the game.</div>
+      <div class="col">
+        <div>
+          <label class="lbl">Home lineup</label>
+          <textarea class="input" id="setup-home-lineup" placeholder="Player 1&#10;Player 2&#10;..." rows="4"></textarea>
+        </div>
+        <div>
+          <label class="lbl">Away lineup</label>
+          <textarea class="input" id="setup-away-lineup" placeholder="Player 1&#10;Player 2&#10;..." rows="4"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-label">Scan handwritten lineup</div>
+      <div class="text-sm text-muted mb8">Take a photo of the handwritten batting order and we'll extract the names using AI.</div>
+      <div class="grid2">
+        <div class="scan-area" onclick="triggerScan('home')">
+          <input type="file" id="scan-home" accept="image/*" capture="environment" onchange="handleScan(event,'home')">
+          <div style="font-size:28px;margin-bottom:8px;opacity:0.5">📷</div>
+          <div class="text-sm text-muted">Scan home lineup</div>
+        </div>
+        <div class="scan-area" onclick="triggerScan('away')">
+          <input type="file" id="scan-away" accept="image/*" capture="environment" onchange="handleScan(event,'away')">
+          <div style="font-size:28px;margin-bottom:8px;opacity:0.5">📷</div>
+          <div class="text-sm text-muted">Scan away lineup</div>
+        </div>
+      </div>
+      <div id="scan-status" class="mt8 text-sm text-muted text-center" style="display:none"></div>
+    </div>
+    <div class="row gap12 mt16">
+      <button class="btn" onclick="showHistory()" style="flex:0 0 auto">Cancel</button>
+      <button class="btn btn-accent" style="flex:1" onclick="createGame()">Start game</button>
+    </div>
+    <div style="height:8px"></div>
+  </div>
+
+  <!-- ══ GAME SCREEN ══ -->
+  <div id="s-game" class="screen">
+
+    <!-- sub-tab: LIVE -->
+    <div id="gt-live">
+      <div class="game-hdr">
+        <div class="game-hdr-top">
+          <div class="team-vs" id="g-teams">Home vs Away</div>
+          <div class="score-display"><span id="g-score-away">0</span><span style="color:var(--text3);margin:0 6px">–</span><span id="g-score-home">0</span></div>
+        </div>
+        <div class="row-between">
+          <div class="row gap12">
+            <div class="half-toggle">
+              <button class="half-opt on" id="h-top" onclick="setHalf('top')">TOP</button>
+              <button class="half-opt" id="h-bot" onclick="setHalf('bot')">BOT</button>
+            </div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700">INN <span id="g-inning" class="mono">1</span></div>
+          </div>
+          <div class="row gap12">
+            <button class="btn btn-sm" onclick="prevHalf()">◀</button>
+            <button class="btn btn-sm btn-accent" onclick="nextHalf()">Next ▶</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="mercy-banner" class="mercy-banner"></div>
+
+      <div class="grid2">
+        <div class="card" style="margin-bottom:0">
+          <div class="card-label">Pitches</div>
+          <div class="dots-row">
+            <div class="dot" id="pd0"></div>
+            <div class="dot" id="pd1"></div>
+            <div class="dot" id="pd2"></div>
+          </div>
+          <div class="row mt8" style="gap:6px">
+            <button class="btn btn-icon-sm" onclick="undoPitch()" aria-label="Undo pitch" title="Undo">↩</button>
+            <button class="btn btn-red" style="flex:1;font-size:14px" onclick="addPitch()">Pitch</button>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:0">
+          <div class="card-label">Outs</div>
+          <div class="dots-row">
+            <div class="dot" id="od0"></div>
+            <div class="dot" id="od1"></div>
+            <div class="dot" id="od2"></div>
+          </div>
+          <div class="row mt8" style="gap:6px">
+            <button class="btn btn-icon-sm" onclick="undoOut()" aria-label="Undo out" title="Undo">↩</button>
+            <button class="btn btn-red" style="flex:1;font-size:14px" onclick="addOut()">Out</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mt8" style="margin-top:10px">
+        <div class="row-between mb8">
+          <div class="card-label" style="margin-bottom:0">Bases</div>
+          <button class="btn btn-sm" onclick="clearBases()">Clear</button>
+        </div>
+        <div class="diamond-wrap">
+          <div>
+            <div class="diamond">
+              <div class="pitcher"></div>
+              <div class="base-sq b2" id="bsq2" onclick="toggleBase(2)"></div>
+              <div class="base-sq b3" id="bsq3" onclick="toggleBase(3)"></div>
+              <div class="base-sq b1" id="bsq1" onclick="toggleBase(1)"></div>
+              <div class="bh"></div>
+            </div>
+            <div class="base-lbl" id="base-lbl">No runners</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row-between mb8">
+          <div class="card-label" style="margin-bottom:0">Current batter</div>
+          <span class="badge badge-accent" id="batter-badge">#1</span>
+        </div>
+        <div class="batter-block">
+          <div class="batter-name" id="batter-name">—</div>
+          <div class="batter-meta" id="batter-meta">Batting team</div>
+        </div>
+        <div class="row mt8" style="gap:6px">
+          <button class="btn btn-sm" onclick="prevBatter()">◀ Prev</button>
+          <button class="btn btn-accent btn-sm" style="flex:1" onclick="nextBatter()">Next batter ▶</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row-between">
+          <div>
+            <div class="card-label" style="margin-bottom:4px">Inning runs</div>
+            <div class="row" style="gap:8px;align-items:baseline">
+              <div class="big-counter" id="inn-runs">0</div>
+              <div class="text-sm text-muted" id="mercy-inline">/ 5 max</div>
+            </div>
+          </div>
+          <div class="row" style="gap:6px">
+            <button class="btn btn-icon" onclick="addRun(-1)" aria-label="Remove run">–</button>
+            <button class="btn btn-icon btn-green" onclick="addRun(1)" aria-label="Add run">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- sub-tab: SCORE -->
+    <div id="gt-score" style="display:none">
+      <div class="card">
+        <div class="card-label">Total score</div>
+        <div id="score-adj-rows"></div>
+      </div>
+      <div class="card">
+        <div class="card-label">Inning by inning</div>
+        <div class="inning-grid" id="inning-grid"></div>
+      </div>
+      <div class="card">
+        <div class="card-label">Rules</div>
+        <div class="text-sm text-muted" style="line-height:1.9">
+          3-pitch self-pitch · 3 outs / half<br>
+          5-run mercy rule (not inning 7)<br>
+          7 innings total
+        </div>
+      </div>
+    </div>
+
+    <!-- sub-tab: HOME LINEUP -->
+    <div id="gt-home" style="display:none">
+      <div class="card">
+        <div class="row-between mb8">
+          <div class="card-label" style="margin-bottom:0" id="lbl-home-lineup">Home lineup</div>
+          <div class="row" style="gap:6px">
+            <button class="btn btn-sm btn-blue" onclick="openScanModal('home')">📷 Scan</button>
+            <button class="btn btn-sm btn-accent" onclick="addPlayerModal('home')">+ Add</button>
+          </div>
+        </div>
+        <div id="home-player-list"></div>
+        <div id="home-empty" style="display:none;text-align:center;padding:16px;color:var(--text3);font-size:14px">No players — tap Add or Scan</div>
+      </div>
+    </div>
+
+    <!-- sub-tab: AWAY LINEUP -->
+    <div id="gt-away" style="display:none">
+      <div class="card">
+        <div class="row-between mb8">
+          <div class="card-label" style="margin-bottom:0" id="lbl-away-lineup">Away lineup</div>
+          <div class="row" style="gap:6px">
+            <button class="btn btn-sm btn-blue" onclick="openScanModal('away')">📷 Scan</button>
+            <button class="btn btn-sm btn-accent" onclick="addPlayerModal('away')">+ Add</button>
+          </div>
+        </div>
+        <div id="away-player-list"></div>
+        <div id="away-empty" style="display:none;text-align:center;padding:16px;color:var(--text3);font-size:14px">No players — tap Add or Scan</div>
+      </div>
+    </div>
+
+    <!-- sub-tab: MORE -->
+    <div id="gt-more" style="display:none">
+      <div class="card">
+        <div class="card-label">Game actions</div>
+        <div class="col">
+          <button class="btn" onclick="resetHalf()">↩ Reset current half-inning</button>
+          <button class="btn btn-red" onclick="endGame()">✓ Mark game complete</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">Navigate games</div>
+        <button class="btn btn-block" onclick="showHistory()">← Back to game history</button>
+      </div>
+    </div>
+
+    <!-- GAME NAV -->
+    <nav class="nav" id="game-nav">
+      <button class="nav-btn active" id="gn-live" onclick="showGameTab('live')">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 3.6C9 3.6 12 9 12 12s-3 8.4-3 8.4M15 3.6C15 3.6 12 9 12 12s3 8.4 3 8.4M3.6 9h16.8M3.6 15h16.8"/></svg>
+        Live
+      </button>
+      <button class="nav-btn" id="gn-score" onclick="showGameTab('score')">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        Score
+      </button>
+      <button class="nav-btn" id="gn-home" onclick="showGameTab('home')">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M17 11l2 2 4-4"/></svg>
+        Home
+      </button>
+      <button class="nav-btn" id="gn-away" onclick="showGameTab('away')">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="15" cy="7" r="3"/><path d="M9 20a6 6 0 0 1 12 0"/><path d="M3 11l2 2 4-4"/></svg>
+        Away
+      </button>
+      <button class="nav-btn" id="gn-more" onclick="showGameTab('more')">
+        <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg>
+        More
+      </button>
+    </nav>
+  </div>
+
+  <!-- HISTORY NAV -->
+  <nav class="nav" id="hist-nav">
+    <button class="nav-btn active" style="flex:1">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+      History
+    </button>
+    <button class="nav-btn" style="flex:1" onclick="showSetup()">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+      New game
+    </button>
+  </nav>
+
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<!-- ADD PLAYER MODAL -->
+<div class="modal-overlay" id="modal-player" onclick="closeModal('modal-player')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-title">Add player</div>
+    <label class="lbl">Player name</label>
+    <input class="input" id="modal-player-input" placeholder="Name" maxlength="40" onkeydown="if(event.key==='Enter')confirmAddPlayer()">
+    <div class="row mt16" style="gap:8px">
+      <button class="btn" style="flex:1" onclick="closeModal('modal-player')">Cancel</button>
+      <button class="btn btn-accent" style="flex:1" onclick="confirmAddPlayer()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCAN MODAL -->
+<div class="modal-overlay" id="modal-scan" onclick="closeModal('modal-scan')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-title">Scan lineup</div>
+    <div class="text-sm text-muted mb8">Take or choose a photo of the handwritten batting order. AI will extract the player names.</div>
+    <label class="scan-area" id="modal-scan-label">
+      <input type="file" id="modal-scan-input" accept="image/*" capture="environment" onchange="handleScanModal(event)">
+      <div id="modal-scan-icon" style="font-size:36px;margin-bottom:8px;opacity:0.5">📷</div>
+      <div class="text-sm text-muted" id="modal-scan-text">Tap to take photo or choose image</div>
+    </label>
+    <div id="modal-scan-status" class="mt8 text-sm text-center" style="display:none;color:var(--warn)"></div>
+    <div id="modal-scan-results" style="display:none">
+      <div class="divider"></div>
+      <div class="text-sm text-muted mb8">Extracted names — edit if needed:</div>
+      <textarea class="input" id="modal-scan-names" rows="6"></textarea>
+      <button class="btn btn-accent btn-block mt12" onclick="confirmScanNames()">Use these names</button>
+    </div>
+    <button class="btn btn-block mt12" onclick="closeModal('modal-scan')">Cancel</button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+//  STORAGE
+// ══════════════════════════════════════════
+const STORE_KEY = 'umpire_games_v2';
+
+function loadGames() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }
+  catch { return []; }
+}
+function saveGames(games) {
+  localStorage.setItem(STORE_KEY, JSON.stringify(games));
+}
+function saveCurrentGame() {
+  if (!G) return;
+  const games = loadGames();
+  const idx = games.findIndex(g => g.id === G.id);
+  if (idx >= 0) games[idx] = G;
+  else games.unshift(G);
+  saveGames(games);
+}
+
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+const MAX_INN = 7, MAX_PITCH = 3, MAX_OUTS = 3, MERCY = 5;
+let G = null; // current game object
+let addPlayerTarget = null;
+let scanTarget = null;
+let scanTeamContext = null;
+
+function newGameObj(homeTeam, awayTeam, homePlayers, awayPlayers) {
+  return {
+    id: Date.now(),
+    createdAt: new Date().toISOString(),
+    status: 'active',
+    homeTeam, awayTeam,
+    homePlayers: [...homePlayers],
+    awayPlayers: [...awayPlayers],
+    homeBatterIdx: 0,
+    awayBatterIdx: 0,
+    inning: 1,
+    half: 'top',
+    pitches: 0,
+    outs: 0,
+    bases: [false, false, false],
+    homeScore: 0,
+    awayScore: 0,
+    inningRuns: 0,
+    scoreGrid: {},
+  };
+}
+
+// ══════════════════════════════════════════
+//  SCREENS
+// ══════════════════════════════════════════
+function showHistory() {
+  setScreen('s-history');
+  document.getElementById('hist-nav').style.display = 'flex';
+  document.getElementById('game-nav').style.display = 'none';
+  renderHistory();
+}
+function showSetup() {
+  setScreen('s-setup');
+  document.getElementById('hist-nav').style.display = 'none';
+  document.getElementById('game-nav').style.display = 'none';
+}
+function showGame() {
+  setScreen('s-game');
+  document.getElementById('hist-nav').style.display = 'none';
+  document.getElementById('game-nav').style.display = 'flex';
+  showGameTab('live');
+  renderAll();
+}
+function setScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function showGameTab(tab) {
+  ['live','score','home','away','more'].forEach(t => {
+    document.getElementById('gt-'+t).style.display = t===tab ? 'block' : 'none';
+    const nb = document.getElementById('gn-'+t);
+    if (nb) nb.classList.toggle('active', t===tab);
+  });
+  if (tab==='score') { renderScoreAdj(); renderInningGrid(); }
+  if (tab==='home') renderLineup('home');
+  if (tab==='away') renderLineup('away');
+}
+
+// ══════════════════════════════════════════
+//  HISTORY SCREEN
+// ══════════════════════════════════════════
+function renderHistory() {
+  const games = loadGames();
+  const el = document.getElementById('history-list');
+  if (!games.length) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">⚾</div>
+      <div class="empty-title">No games yet</div>
+      <div class="empty-sub">Tap + New game to get started</div>
+    </div>`;
+    return;
+  }
+  el.innerHTML = games.map(g => {
+    const d = new Date(g.createdAt);
+    const dateStr = d.toLocaleDateString('en-CA', {month:'short',day:'numeric',year:'numeric'}) + ' ' + d.toLocaleTimeString('en-CA', {hour:'2-digit',minute:'2-digit'});
+    const statusBadge = g.status === 'complete'
+      ? `<span class="badge badge-green">Final</span>`
+      : `<span class="badge badge-accent">Live</span>`;
+    return `<div class="game-card ${g.status==='active'?'active-game':''}" onclick="loadGame(${g.id})">
+      <div class="row-between mb8">
+        <div class="game-date">${dateStr}</div>
+        ${statusBadge}
+      </div>
+      <div class="game-teams">${esc(g.awayTeam)} <span style="color:var(--text3)">vs</span> ${esc(g.homeTeam)}</div>
+      <div class="game-score-big">
+        <span style="color:var(--text)">${g.awayScore}</span>
+        <span class="score-sep">—</span>
+        <span style="color:var(--text)">${g.homeScore}</span>
+      </div>
+      <div class="text-sm text-dim mt8">Inn ${g.inning} · ${g.half==='top'?'Top':'Bottom'} · ${g.outs} out${g.outs!==1?'s':''}</div>
+    </div>`;
+  }).join('');
+}
+
+function loadGame(id) {
+  const games = loadGames();
+  G = games.find(g => g.id === id);
+  if (!G) return;
+  showGame();
+}
+
+// ══════════════════════════════════════════
+//  SETUP
+// ══════════════════════════════════════════
+function createGame() {
+  const home = document.getElementById('setup-home').value.trim() || 'Home';
+  const away = document.getElementById('setup-away').value.trim() || 'Away';
+  const hLines = document.getElementById('setup-home-lineup').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const aLines = document.getElementById('setup-away-lineup').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  G = newGameObj(home, away, hLines, aLines);
+  saveCurrentGame();
+  // clear setup fields
+  ['setup-home','setup-away','setup-home-lineup','setup-away-lineup'].forEach(id => document.getElementById(id).value = '');
+  showGame();
+}
+
+// ══════════════════════════════════════════
+//  GAME LOGIC
+// ══════════════════════════════════════════
+function isMercyActive() { return G.inning < MAX_INN; }
+
+function addPitch() {
+  if (G.pitches >= MAX_PITCH) { toast('3 pitches — batter done'); return; }
+  G.pitches++;
+  if (G.pitches === MAX_PITCH) toast('3rd pitch!');
+  renderPitches(); saveCurrentGame();
+}
+function undoPitch() {
+  if (G.pitches > 0) { G.pitches--; renderPitches(); saveCurrentGame(); }
+}
+function addOut() {
+  if (G.outs >= MAX_OUTS) return;
+  G.outs++;
+  G.pitches = 0;
+  advanceBatter();
+  renderPitches(); renderOuts(); renderBatter(); saveCurrentGame();
+  if (G.outs === MAX_OUTS) toast('3 outs — end of half-inning!');
+}
+function undoOut() {
+  if (G.outs > 0) { G.outs--; renderOuts(); saveCurrentGame(); }
+}
+function addRun(n) {
+  const nr = G.inningRuns + n;
+  if (nr < 0) return;
+  if (isMercyActive() && nr > MERCY) { toast('Mercy rule — 5 runs max!'); return; }
+  G.inningRuns = nr;
+  if (G.half === 'top') G.awayScore = Math.max(0, G.awayScore + n);
+  else G.homeScore = Math.max(0, G.homeScore + n);
+  saveInningRuns();
+  renderScoreLine(); renderInningRuns(); checkMercy(); saveCurrentGame();
+}
+function saveInningRuns() {
+  const key = G.inning + '_' + G.half;
+  G.scoreGrid[key] = G.inningRuns;
+}
+function toggleBase(n) {
+  G.bases[n-1] = !G.bases[n-1];
+  renderBases(); saveCurrentGame();
+}
+function clearBases() {
+  G.bases = [false,false,false];
+  renderBases(); saveCurrentGame();
+}
+function setHalf(h) {
+  G.half = h; G.pitches = 0; G.outs = 0; G.inningRuns = 0;
+  G.bases = [false,false,false];
+  renderAll(); saveCurrentGame();
+}
+function nextHalf() {
+  if (G.half === 'top') setHalf('bot');
+  else {
+    if (G.inning >= MAX_INN) { toast('Game over! Mark complete in More tab.'); return; }
+    G.inning++; setHalf('top');
+  }
+}
+function prevHalf() {
+  if (G.half === 'bot') setHalf('top');
+  else { if (G.inning <= 1) return; G.inning--; setHalf('bot'); }
+}
+function nextBatter() {
+  G.pitches = 0;
+  advanceBatter();
+  renderPitches(); renderBatter(); saveCurrentGame();
+}
+function prevBatter() {
+  G.pitches = 0;
+  if (G.half === 'top') {
+    const len = G.awayPlayers.length;
+    if (len > 0) G.awayBatterIdx = (G.awayBatterIdx - 1 + len) % len;
+  } else {
+    const len = G.homePlayers.length;
+    if (len > 0) G.homeBatterIdx = (G.homeBatterIdx - 1 + len) % len;
+  }
+  renderPitches(); renderBatter(); saveCurrentGame();
+}
+function advanceBatter() {
+  if (G.half === 'top') {
+    if (G.awayPlayers.length > 0) G.awayBatterIdx = (G.awayBatterIdx + 1) % G.awayPlayers.length;
+  } else {
+    if (G.homePlayers.length > 0) G.homeBatterIdx = (G.homeBatterIdx + 1) % G.homePlayers.length;
+  }
+}
+function resetHalf() {
+  if (!confirm('Reset this half-inning?')) return;
+  G.pitches = 0; G.outs = 0; G.inningRuns = 0; G.bases = [false,false,false];
+  renderAll(); saveCurrentGame();
+}
+function endGame() {
+  if (!confirm('Mark this game as complete?')) return;
+  G.status = 'complete';
+  saveCurrentGame();
+  toast('Game saved as complete!');
+  setTimeout(showHistory, 800);
+}
+
+// ══════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════
+function renderAll() {
+  renderScoreLine(); renderInningHeader(); renderPitches(); renderOuts();
+  renderBases(); renderBatter(); renderInningRuns(); checkMercy();
+}
+function renderScoreLine() {
+  document.getElementById('g-score-away').textContent = G.awayScore;
+  document.getElementById('g-score-home').textContent = G.homeScore;
+  document.getElementById('g-teams').textContent = G.awayTeam + ' vs ' + G.homeTeam;
+}
+function renderInningHeader() {
+  document.getElementById('g-inning').textContent = G.inning;
+  document.getElementById('h-top').classList.toggle('on', G.half==='top');
+  document.getElementById('h-bot').classList.toggle('on', G.half==='bot');
+}
+function renderPitches() {
+  for (let i=0;i<3;i++) {
+    const d = document.getElementById('pd'+i);
+    if (d) d.classList.toggle('used-pitch', i < G.pitches);
+  }
+}
+function renderOuts() {
+  for (let i=0;i<3;i++) {
+    const d = document.getElementById('od'+i);
+    if (d) d.classList.toggle('used-out', i < G.outs);
+  }
+}
+function renderBases() {
+  for (let i=1;i<=3;i++) document.getElementById('bsq'+i).classList.toggle('on', G.bases[i-1]);
+  const on = [1,2,3].filter(i=>G.bases[i-1]).map(i=>i===1?'1st':i===2?'2nd':'3rd');
+  document.getElementById('base-lbl').textContent = on.length ? 'Runner on ' + on.join(', ') : 'No runners';
+}
+function renderBatter() {
+  const isTop = G.half === 'top';
+  const players = isTop ? G.awayPlayers : G.homePlayers;
+  const idx = isTop ? G.awayBatterIdx : G.homeBatterIdx;
+  const team = isTop ? G.awayTeam : G.homeTeam;
+  const name = players.length > 0 ? players[idx] : team + ' batter';
+  const order = players.length > 0 ? (idx+1) + ' of ' + players.length : '—';
+  document.getElementById('batter-name').textContent = name;
+  document.getElementById('batter-badge').textContent = '#' + (players.length > 0 ? idx+1 : '—');
+  document.getElementById('batter-meta').textContent = team + ' · #' + order;
+}
+function renderInningRuns() {
+  document.getElementById('inn-runs').textContent = G.inningRuns;
+  const mi = document.getElementById('mercy-inline');
+  if (isMercyActive()) {
+    mi.textContent = '/ 5 max';
+    mi.style.color = G.inningRuns >= MERCY ? 'var(--warn)' : 'var(--text3)';
+  } else {
+    mi.textContent = 'no mercy (last inning)';
+    mi.style.color = 'var(--text3)';
+  }
+}
+function checkMercy() {
+  const b = document.getElementById('mercy-banner');
+  if (isMercyActive() && G.inningRuns >= MERCY) {
+    b.textContent = 'Mercy rule — 5 runs reached! End this half-inning.';
+    b.style.display = 'block';
+  } else { b.style.display = 'none'; }
+}
+function renderScoreAdj() {
+  const el = document.getElementById('score-adj-rows');
+  el.innerHTML = ['away','home'].map(side => {
+    const name = side==='away' ? G.awayTeam : G.homeTeam;
+    const score = side==='away' ? G.awayScore : G.homeScore;
+    return `<div class="score-adj-row">
+      <div class="score-team">${esc(name)}</div>
+      <button class="btn btn-icon-sm" onclick="adjScore('${side}',-1)">–</button>
+      <div class="score-num" id="sadj-${side}">${score}</div>
+      <button class="btn btn-icon-sm btn-green" onclick="adjScore('${side}',1)">+</button>
+    </div>`;
+  }).join('');
+}
+function adjScore(side, n) {
+  if (side==='home') G.homeScore = Math.max(0, G.homeScore + n);
+  else G.awayScore = Math.max(0, G.awayScore + n);
+  renderScoreLine();
+  document.getElementById('sadj-'+side).textContent = side==='home' ? G.homeScore : G.awayScore;
+  saveCurrentGame();
+}
+function renderInningGrid() {
+  const innings = Array.from({length:MAX_INN},(_,i)=>i+1);
+  let html = `<table class="igrid-table"><thead><tr><th style="text-align:left;min-width:70px">Team</th>`;
+  innings.forEach(i => html += `<th>${i}</th>`);
+  html += `<th style="color:var(--accent)">R</th></tr></thead><tbody>`;
+  ['away','home'].forEach(side => {
+    const name = side==='away' ? G.awayTeam : G.homeTeam;
+    const total = side==='away' ? G.awayScore : G.homeScore;
+    const halfKey = side==='away' ? 'top' : 'bot';
+    html += `<tr><td class="team-col">${esc(name)}</td>`;
+    innings.forEach(i => {
+      const key = i + '_' + halfKey;
+      const val = G.scoreGrid[key];
+      const isCur = i===G.inning && G.half===halfKey;
+      html += `<td class="${isCur?'cur-inn':''}">${val !== undefined ? val : '—'}</td>`;
+    });
+    html += `<td class="total">${total}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('inning-grid').innerHTML = html;
+}
+function renderLineup(team) {
+  const players = team==='home' ? G.homePlayers : G.awayPlayers;
+  const listEl = document.getElementById(team+'-player-list');
+  const emptyEl = document.getElementById(team+'-empty');
+  const titleEl = document.getElementById('lbl-'+team+'-lineup');
+  titleEl.textContent = (team==='home' ? G.homeTeam : G.awayTeam) + ' lineup';
+  if (!players.length) { listEl.innerHTML=''; emptyEl.style.display='block'; return; }
+  emptyEl.style.display = 'none';
+  const isTop = G.half === 'top';
+  const currentIdx = team==='home' ? G.homeBatterIdx : G.awayBatterIdx;
+  const isBatting = (team==='away' && isTop) || (team==='home' && !isTop);
+  listEl.innerHTML = players.map((p,i) => `
+    <div class="player-row">
+      <div class="player-ord">${i+1}</div>
+      <div class="player-nm ${isBatting && i===currentIdx ? 'up' : ''}">${esc(p)}${isBatting && i===currentIdx ? ' <span style="font-size:11px;color:var(--accent)">▶ up</span>' : ''}</div>
+      <button class="btn btn-icon-sm" style="color:var(--text3);font-size:14px" onclick="removePlayer('${team}',${i})" aria-label="Remove">✕</button>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════
+//  PLAYER MANAGEMENT
+// ══════════════════════════════════════════
+function addPlayerModal(team) {
+  addPlayerTarget = team;
+  document.getElementById('modal-player-input').value = '';
+  openModal('modal-player');
+  setTimeout(() => document.getElementById('modal-player-input').focus(), 200);
+}
+function confirmAddPlayer() {
+  const name = document.getElementById('modal-player-input').value.trim();
+  if (!name) return;
+  if (addPlayerTarget === 'home') G.homePlayers.push(name);
+  else G.awayPlayers.push(name);
+  closeModal('modal-player');
+  renderLineup(addPlayerTarget);
+  renderBatter();
+  saveCurrentGame();
+}
+function removePlayer(team, idx) {
+  if (!confirm('Remove this player?')) return;
+  if (team==='home') {
+    G.homePlayers.splice(idx,1);
+    if (G.homeBatterIdx >= G.homePlayers.length) G.homeBatterIdx = 0;
+  } else {
+    G.awayPlayers.splice(idx,1);
+    if (G.awayBatterIdx >= G.awayPlayers.length) G.awayBatterIdx = 0;
+  }
+  renderLineup(team); renderBatter(); saveCurrentGame();
+}
+
+// ══════════════════════════════════════════
+//  SCAN / OCR
+// ══════════════════════════════════════════
+function triggerScan(team) {
+  document.getElementById('scan-' + team).click();
+}
+async function handleScan(event, team) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const statusEl = document.getElementById('scan-status');
+  statusEl.style.display = 'block';
+  statusEl.textContent = 'Reading lineup...';
+  const names = await ocrLineup(file);
+  if (names) {
+    const textarea = document.getElementById(team==='home'?'setup-home-lineup':'setup-away-lineup');
+    textarea.value = names;
+    statusEl.textContent = '✓ Lineup extracted! Review and edit above.';
+  } else {
+    statusEl.textContent = 'Could not read lineup — please type manually.';
+  }
+  event.target.value = '';
+}
+
+function openScanModal(team) {
+  scanTeamContext = team;
+  document.getElementById('modal-scan-input').value = '';
+  document.getElementById('modal-scan-status').style.display = 'none';
+  document.getElementById('modal-scan-results').style.display = 'none';
+  document.getElementById('modal-scan-text').textContent = 'Tap to take photo or choose image';
+  document.getElementById('modal-scan-icon').textContent = '📷';
+  openModal('modal-scan');
+}
+async function handleScanModal(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const statusEl = document.getElementById('modal-scan-status');
+  const resultsEl = document.getElementById('modal-scan-results');
+  statusEl.style.display = 'block';
+  statusEl.textContent = '⏳ Reading lineup with AI...';
+  resultsEl.style.display = 'none';
+  const names = await ocrLineup(file);
+  if (names) {
+    statusEl.style.display = 'none';
+    document.getElementById('modal-scan-names').value = names;
+    resultsEl.style.display = 'block';
+  } else {
+    statusEl.textContent = '⚠ Could not read lineup. Try a clearer photo or type manually.';
+  }
+}
+function confirmScanNames() {
+  const names = document.getElementById('modal-scan-names').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  if (!names.length) return;
+  if (scanTeamContext === 'home') G.homePlayers = names;
+  else G.awayPlayers = names;
+  const team = scanTeamContext;
+  if (team === 'home') G.homeBatterIdx = 0; else G.awayBatterIdx = 0;
+  closeModal('modal-scan');
+  renderLineup(team); renderBatter(); saveCurrentGame();
+  toast('Lineup updated!');
+}
+
+async function ocrLineup(file) {
+  try {
+    const base64 = await fileToBase64(file);
+    const mediaType = file.type || 'image/jpeg';
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 500,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+            { type: 'text', text: 'This is a handwritten softball batting lineup. Extract ONLY the player names in batting order, one per line. Output only the names, nothing else, no numbers, no positions, just one name per line.' }
+          ]
+        }]
+      })
+    });
+    const data = await resp.json();
+    const text = data.content && data.content[0] && data.content[0].text;
+    return text ? text.trim() : null;
+  } catch(e) {
+    console.error('OCR error:', e);
+    return null;
+  }
+}
+
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = () => rej(new Error('Read failed'));
+    r.readAsDataURL(file);
+  });
+}
+
+// ══════════════════════════════════════════
+//  MODALS / UTILS
+// ══════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+showHistory();
+</script>
+</body>
+</html>
