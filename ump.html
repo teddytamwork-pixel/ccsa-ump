@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0f1923">
+<meta name="theme-color" content="#0f1923" id="theme-meta">
 <title>Umpire Tool</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
@@ -30,18 +30,45 @@
   --radius: 10px;
   --radius-sm: 6px;
 }
+body.light {
+  --bg: #f4f6f8;
+  --bg2: #ffffff;
+  --bg3: #edf0f3;
+  --bg4: #e2e7ec;
+  --line: rgba(0,0,0,0.08);
+  --line2: rgba(0,0,0,0.16);
+  --text: #1a2533;
+  --text2: #4a6070;
+  --text3: #8aa0b0;
+  --accent: #d4800a;
+  --accent2: #a85f00;
+  --green: #1a9e50;
+  --red: #c0392b;
+  --blue: #2176ae;
+  --warn: #c47d00;
+}
+body.light .half-opt.on { color: #fff; }
+body.light .btn-accent { color: #fff; }
+body.light .dot.used-pitch,
+body.light .dot.used-out { box-shadow: 0 0 6px rgba(192,57,43,0.3); }
+body.light .base-sq.on { box-shadow: 0 0 8px rgba(212,128,10,0.4); }
+body.light .nav-btn.active svg { filter: drop-shadow(0 0 3px var(--accent)); }
+body.light .modal-overlay { background: rgba(0,0,0,0.45); }
+body.light .toast { background: #1a2533; color: #fff; }
+.theme-toggle { background: none; border: 1px solid var(--line2); border-radius: 20px; padding: 5px 12px; font-size: 13px; color: var(--text2); cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background 0.15s; }
+.theme-toggle:hover { background: var(--bg3); }
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Barlow', sans-serif; font-size: 16px; overflow: hidden; padding-bottom: env(safe-area-inset-bottom, 50px); }
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Barlow', sans-serif; font-size: 16px; overflow: hidden; }
 .mono { font-family: 'DM Mono', monospace; }
 .cond { font-family: 'Barlow Condensed', sans-serif; }
 
 /* ── APP SHELL ── */
-#app { height: 100dvh; display: flex; flex-direction: column; max-width: 480px; margin: 0 auto; position: relative; }
-.screen { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 16px 14px 80px; display: none; }
+#app { height: 100vh; display: flex; flex-direction: column; max-width: 480px; margin: 0 auto; position: relative; }
 .screen.active { display: block; }
 
 /* ── BOTTOM NAV ── */
-.nav { position: absolute; bottom: 0; left: 0; right: 0; height: 64px; background: var(--bg2); border-top: 1px solid var(--line); display: flex; align-items: stretch; z-index: 100; }
+.nav { position: absolute; bottom: 0; left: 0; right: 0; height: calc(64px + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px); background: var(--bg2); border-top: 1px solid var(--line); display: flex; align-items: stretch; z-index: 100; }
+.screen { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 16px 14px calc(80px + env(safe-area-inset-bottom, 16px)); display: none; }
 .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; background: none; border: none; color: var(--text3); font-family: 'Barlow', sans-serif; font-size: 11px; cursor: pointer; transition: color 0.15s; padding: 8px 4px; }
 .nav-btn svg { width: 22px; height: 22px; }
 .nav-btn.active { color: var(--accent); }
@@ -221,7 +248,10 @@ label.lbl { display: block; font-size: 13px; color: var(--text2); margin-bottom:
         <div class="hdr-title cond">⚾ Umpire Tool</div>
         <div class="hdr-sub">Game history</div>
       </div>
-      <button class="btn btn-accent btn-sm" onclick="showSetup()">+ New game</button>
+      <div class="row" style="gap:8px">
+        <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn-hist">🌙 Dark</button>
+        <button class="btn btn-accent btn-sm" onclick="showSetup()">+ New game</button>
+      </div>
     </div>
     <div id="history-list"></div>
   </div>
@@ -230,7 +260,32 @@ label.lbl { display: block; font-size: 13px; color: var(--text2); margin-bottom:
   <div id="s-setup" class="screen">
     <div class="setup-logo">
       <div class="setup-logo-text">⚾ UMPIRE</div>
-      <div class="setup-logo-sub">SOFTBALL · SELF-PITCH · 7 INNINGS</div>
+      <div class="setup-logo-sub">SOFTBALL · SELF-PITCH · 8 INNINGS</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Game info</div>
+      <div class="col">
+        <div class="grid2">
+          <div>
+            <label class="lbl">Game code</label>
+            <input class="input" id="setup-code" placeholder="e.g. G-101" maxlength="20">
+          </div>
+          <div>
+            <label class="lbl">Diamond</label>
+            <input class="input" id="setup-diamond" placeholder="e.g. Diamond 3" maxlength="30">
+          </div>
+        </div>
+        <div class="grid2">
+          <div>
+            <label class="lbl">Date</label>
+            <input class="input" id="setup-date" type="date">
+          </div>
+          <div>
+            <label class="lbl">Time</label>
+            <input class="input" id="setup-time" type="time">
+          </div>
+        </div>
+      </div>
     </div>
     <div class="card">
       <div class="card-label">Teams</div>
@@ -259,22 +314,27 @@ label.lbl { display: block; font-size: 13px; color: var(--text2); margin-bottom:
         </div>
       </div>
     </div>
-    <div class="card">
-      <div class="card-label">Scan handwritten lineup</div>
-      <div class="text-sm text-muted mb8">Take a photo of the handwritten batting order and we'll extract the names using AI.</div>
-      <div class="grid2">
-        <div class="scan-area" onclick="triggerScan('home')">
-          <input type="file" id="scan-home" accept="image/*" capture="environment" onchange="handleScan(event,'home')">
-          <div style="font-size:28px;margin-bottom:8px;opacity:0.5">📷</div>
-          <div class="text-sm text-muted">Scan home lineup</div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <button class="collapsible-hdr" onclick="toggleCollapse('ocr-body','ocr-chevron')" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:none;border:none;cursor:pointer;color:var(--text3)">
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase">📷 Scan handwritten lineup</span>
+        <span id="ocr-chevron" style="font-size:16px;transition:transform 0.2s">▸</span>
+      </button>
+      <div id="ocr-body" style="display:none;padding:0 16px 14px">
+        <div class="text-sm text-muted mb8">Take a photo of the handwritten batting order and we'll extract the names using AI.</div>
+        <div class="grid2">
+          <div class="scan-area" onclick="triggerScan('home')">
+            <input type="file" id="scan-home" accept="image/*" capture="environment" onchange="handleScan(event,'home')">
+            <div style="font-size:28px;margin-bottom:8px;opacity:0.5">📷</div>
+            <div class="text-sm text-muted">Scan home lineup</div>
+          </div>
+          <div class="scan-area" onclick="triggerScan('away')">
+            <input type="file" id="scan-away" accept="image/*" capture="environment" onchange="handleScan(event,'away')">
+            <div style="font-size:28px;margin-bottom:8px;opacity:0.5">📷</div>
+            <div class="text-sm text-muted">Scan away lineup</div>
+          </div>
         </div>
-        <div class="scan-area" onclick="triggerScan('away')">
-          <input type="file" id="scan-away" accept="image/*" capture="environment" onchange="handleScan(event,'away')">
-          <div style="font-size:28px;margin-bottom:8px;opacity:0.5">📷</div>
-          <div class="text-sm text-muted">Scan away lineup</div>
-        </div>
+        <div id="scan-status" class="mt8 text-sm text-muted text-center" style="display:none"></div>
       </div>
-      <div id="scan-status" class="mt8 text-sm text-muted text-center" style="display:none"></div>
     </div>
     <div class="row gap12 mt16">
       <button class="btn" onclick="showHistory()" style="flex:0 0 auto">Cancel</button>
@@ -390,9 +450,60 @@ label.lbl { display: block; font-size: 13px; color: var(--text2); margin-bottom:
 
     <!-- sub-tab: SCORE -->
     <div id="gt-score" style="display:none">
+      <div class="card" id="gameinfo-card">
+        <div class="row-between" style="margin-bottom:10px">
+          <div class="card-label" style="margin-bottom:0">Game info</div>
+          <button class="btn btn-sm" id="gameinfo-edit-btn" onclick="toggleGameInfoEdit()">✏️ Edit</button>
+        </div>
+        <div id="gameinfo-display" style="font-size:14px;color:var(--text2);line-height:2.2"></div>
+        <div id="gameinfo-edit" style="display:none">
+          <div class="col" style="margin-top:4px">
+            <div class="grid2">
+              <div>
+                <label class="lbl">Game code</label>
+                <input class="input" id="gi-code" placeholder="e.g. G-101" maxlength="20">
+              </div>
+              <div>
+                <label class="lbl">Diamond</label>
+                <input class="input" id="gi-diamond" placeholder="e.g. Diamond 3" maxlength="30">
+              </div>
+            </div>
+            <div class="grid2">
+              <div>
+                <label class="lbl">Date</label>
+                <input class="input" id="gi-date" type="date">
+              </div>
+              <div>
+                <label class="lbl">Time</label>
+                <input class="input" id="gi-time" type="time">
+              </div>
+            </div>
+            <button class="btn btn-accent btn-block" onclick="saveGameInfo()">Save</button>
+          </div>
+        </div>
+      </div>
       <div class="card">
-        <div class="card-label">Total score</div>
+        <div class="card-label">Runs scored</div>
         <div id="score-adj-rows"></div>
+      </div>
+      <div class="card">
+        <div class="card-label">Uniform deduction</div>
+        <div class="text-sm text-muted mb8" style="font-size:12px">Deduct points for uniform violations (any amount, both teams)</div>
+        <div id="uniform-rows"></div>
+      </div>
+      <div class="card">
+        <div class="card-label">Sportsmanship deduction</div>
+        <div class="text-sm text-muted mb8" style="font-size:12px">–1 per infraction, both teams</div>
+        <div id="sport-rows"></div>
+      </div>
+      <div class="card">
+        <div class="card-label">Equipment bonus</div>
+        <div class="text-sm text-muted mb8" style="font-size:12px">Away team only: +1 bonus · Home team only: –1 penalty</div>
+        <div id="equip-rows"></div>
+      </div>
+      <div class="card" style="border-color:var(--accent)">
+        <div class="card-label" style="color:var(--accent)">Final score</div>
+        <div id="final-score-rows"></div>
       </div>
       <div class="card">
         <div class="card-label">Inning by inning</div>
@@ -402,8 +513,8 @@ label.lbl { display: block; font-size: 13px; color: var(--text2); margin-bottom:
         <div class="card-label">Rules</div>
         <div class="text-sm text-muted" style="line-height:1.9">
           3-pitch self-pitch · 3 outs / half<br>
-          5-run mercy rule (not inning 7)<br>
-          7 innings total
+          5-run mercy rule (not inning 8)<br>
+          8 innings total
         </div>
       </div>
     </div>
@@ -441,6 +552,13 @@ label.lbl { display: block; font-size: 13px; color: var(--text2); margin-bottom:
     <!-- sub-tab: MORE -->
     <div id="gt-more" style="display:none">
       <div class="card">
+        <div class="card-label">Appearance</div>
+        <div class="row-between">
+          <div class="text-sm text-muted">Theme</div>
+          <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn">🌙 Dark</button>
+        </div>
+      </div>
+      <div class="card">
         <div class="card-label">Game actions</div>
         <div class="col">
           <button class="btn" onclick="resetHalf()">↩ Reset current half-inning</button>
@@ -450,6 +568,16 @@ label.lbl { display: block; font-size: 13px; color: var(--text2); margin-bottom:
       <div class="card">
         <div class="card-label">Navigate games</div>
         <button class="btn btn-block" onclick="showHistory()">← Back to game history</button>
+      </div>
+      <div class="card">
+        <div class="card-label">Rules reminder</div>
+        <div class="text-sm text-muted" style="line-height:2">
+          • 3-pitch self-pitch per at-bat<br>
+          • 3 outs = end of half-inning<br>
+          • 5-run mercy rule per half<br>
+          • No mercy in inning 8 (last inning)<br>
+          • 8 innings total
+        </div>
       </div>
     </div>
 
@@ -554,17 +682,21 @@ function saveCurrentGame() {
 // ══════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════
-const MAX_INN = 7, MAX_PITCH = 3, MAX_OUTS = 3, MERCY = 5;
+const MAX_INN = 8, MAX_PITCH = 3, MAX_OUTS = 3, MERCY = 5;
 let G = null; // current game object
 let addPlayerTarget = null;
 let scanTarget = null;
 let scanTeamContext = null;
 
-function newGameObj(homeTeam, awayTeam, homePlayers, awayPlayers) {
+function newGameObj(homeTeam, awayTeam, homePlayers, awayPlayers, gameCode, diamond, gameDate, gameTime) {
   return {
     id: Date.now(),
     createdAt: new Date().toISOString(),
     status: 'active',
+    gameCode: gameCode || '',
+    diamond: diamond || '',
+    gameDate: gameDate || '',
+    gameTime: gameTime || '',
     homeTeam, awayTeam,
     homePlayers: [...homePlayers],
     awayPlayers: [...awayPlayers],
@@ -579,6 +711,11 @@ function newGameObj(homeTeam, awayTeam, homePlayers, awayPlayers) {
     awayScore: 0,
     inningRuns: 0,
     scoreGrid: {},
+    homeUniform: 0,
+    awayUniform: 0,
+    homeSport: 0,
+    awaySport: 0,
+    equipBonus: 0,
   };
 }
 
@@ -613,7 +750,7 @@ function showGameTab(tab) {
     const nb = document.getElementById('gn-'+t);
     if (nb) nb.classList.toggle('active', t===tab);
   });
-  if (tab==='score') { renderScoreAdj(); renderInningGrid(); }
+  if (tab==='score') { renderGameInfo(); renderScoreAdj(); renderDeductions(); renderInningGrid(); }
   if (tab==='home') renderLineup('home');
   if (tab==='away') renderLineup('away');
 }
@@ -638,10 +775,14 @@ function renderHistory() {
     const statusBadge = g.status === 'complete'
       ? `<span class="badge badge-green">Final</span>`
       : `<span class="badge badge-accent">Live</span>`;
+    const meta = [g.gameCode, g.diamond, g.gameDate, g.gameTime].filter(Boolean).join(' · ');
     return `<div class="game-card ${g.status==='active'?'active-game':''}" onclick="loadGame(${g.id})">
       <div class="row-between mb8">
-        <div class="game-date">${dateStr}</div>
-        ${statusBadge}
+        <div class="game-date">${meta || dateStr}</div>
+        <div class="row" style="gap:6px">
+          ${statusBadge}
+          <button class="btn btn-icon-sm btn-red" style="font-size:13px" onclick="event.stopPropagation();deleteGame(${g.id})" aria-label="Delete game">✕</button>
+        </div>
       </div>
       <div class="game-teams">${esc(g.awayTeam)} <span style="color:var(--text3)">vs</span> ${esc(g.homeTeam)}</div>
       <div class="game-score-big">
@@ -660,6 +801,16 @@ function loadGame(id) {
   if (!G) return;
   showGame();
 }
+function deleteGame(id) {
+  const games = loadGames();
+  const g = games.find(x => x.id === id);
+  if (!g) return;
+  const label = `${g.awayTeam} vs ${g.homeTeam}${g.gameCode ? ' ('+g.gameCode+')' : ''}`;
+  if (!confirm(`Delete game "${label}"?\n\nThis cannot be undone.`)) return;
+  saveGames(games.filter(x => x.id !== id));
+  renderHistory();
+  toast('Game deleted');
+}
 
 // ══════════════════════════════════════════
 //  SETUP
@@ -669,10 +820,13 @@ function createGame() {
   const away = document.getElementById('setup-away').value.trim() || 'Away';
   const hLines = document.getElementById('setup-home-lineup').value.split('\n').map(s=>s.trim()).filter(Boolean);
   const aLines = document.getElementById('setup-away-lineup').value.split('\n').map(s=>s.trim()).filter(Boolean);
-  G = newGameObj(home, away, hLines, aLines);
+  const code = document.getElementById('setup-code').value.trim();
+  const diamond = document.getElementById('setup-diamond').value.trim();
+  const date = document.getElementById('setup-date').value;
+  const time = document.getElementById('setup-time').value;
+  G = newGameObj(home, away, hLines, aLines, code, diamond, date, time);
   saveCurrentGame();
-  // clear setup fields
-  ['setup-home','setup-away','setup-home-lineup','setup-away-lineup'].forEach(id => document.getElementById(id).value = '');
+  ['setup-home','setup-away','setup-home-lineup','setup-away-lineup','setup-code','setup-diamond','setup-date','setup-time'].forEach(id => document.getElementById(id).value = '');
   showGame();
 }
 
@@ -838,6 +992,40 @@ function checkMercy() {
     b.style.display = 'block';
   } else { b.style.display = 'none'; }
 }
+function renderGameInfo() {
+  const el = document.getElementById('gameinfo-display');
+  const rows = [];
+  if (G.gameCode) rows.push(`<span style="color:var(--text3);font-size:12px">Code</span> <strong>${esc(G.gameCode)}</strong>`);
+  if (G.diamond) rows.push(`<span style="color:var(--text3);font-size:12px">Diamond</span> <strong>${esc(G.diamond)}</strong>`);
+  if (G.gameDate) rows.push(`<span style="color:var(--text3);font-size:12px">Date</span> <strong>${G.gameDate}</strong>`);
+  if (G.gameTime) rows.push(`<span style="color:var(--text3);font-size:12px">Time</span> <strong>${G.gameTime}</strong>`);
+  el.innerHTML = rows.length ? rows.join(' &nbsp;·&nbsp; ') : '<span style="color:var(--text3)">No game info — tap Edit to add</span>';
+}
+function toggleGameInfoEdit() {
+  const editEl = document.getElementById('gameinfo-edit');
+  const dispEl = document.getElementById('gameinfo-display');
+  const btn = document.getElementById('gameinfo-edit-btn');
+  const isOpen = editEl.style.display === 'block';
+  if (!isOpen) {
+    document.getElementById('gi-code').value = G.gameCode || '';
+    document.getElementById('gi-diamond').value = G.diamond || '';
+    document.getElementById('gi-date').value = G.gameDate || '';
+    document.getElementById('gi-time').value = G.gameTime || '';
+  }
+  editEl.style.display = isOpen ? 'none' : 'block';
+  dispEl.style.display = isOpen ? 'block' : 'none';
+  btn.textContent = isOpen ? '✏️ Edit' : '✕ Cancel';
+}
+function saveGameInfo() {
+  G.gameCode = document.getElementById('gi-code').value.trim();
+  G.diamond = document.getElementById('gi-diamond').value.trim();
+  G.gameDate = document.getElementById('gi-date').value;
+  G.gameTime = document.getElementById('gi-time').value;
+  saveCurrentGame();
+  toggleGameInfoEdit();
+  renderGameInfo();
+  toast('Game info saved!');
+}
 function renderScoreAdj() {
   const el = document.getElementById('score-adj-rows');
   el.innerHTML = ['away','home'].map(side => {
@@ -856,7 +1044,90 @@ function adjScore(side, n) {
   else G.awayScore = Math.max(0, G.awayScore + n);
   renderScoreLine();
   document.getElementById('sadj-'+side).textContent = side==='home' ? G.homeScore : G.awayScore;
+  renderFinalScore();
   saveCurrentGame();
+}
+function renderDeductions() {
+  // Uniform
+  document.getElementById('uniform-rows').innerHTML = ['away','home'].map(side => {
+    const name = side==='away' ? G.awayTeam : G.homeTeam;
+    const val = side==='away' ? (G.awayUniform||0) : (G.homeUniform||0);
+    return `<div class="score-adj-row">
+      <div class="score-team">${esc(name)}</div>
+      <button class="btn btn-icon-sm btn-red" onclick="adjDeduct('uniform','${side}',1)">–</button>
+      <div class="score-num" id="udj-${side}" style="color:${val>0?'var(--red)':'var(--text2)'}">–${val}</div>
+      <button class="btn btn-icon-sm" onclick="adjDeduct('uniform','${side}',-1)">+</button>
+    </div>`;
+  }).join('');
+  // Sportsmanship
+  document.getElementById('sport-rows').innerHTML = ['away','home'].map(side => {
+    const name = side==='away' ? G.awayTeam : G.homeTeam;
+    const val = side==='away' ? (G.awaySport||0) : (G.homeSport||0);
+    return `<div class="score-adj-row">
+      <div class="score-team">${esc(name)}</div>
+      <button class="btn btn-icon-sm btn-red" onclick="adjDeduct('sport','${side}',1)">–1</button>
+      <div class="score-num" id="sdj-${side}" style="color:${val>0?'var(--red)':'var(--text2)'}">–${val}</div>
+      <button class="btn btn-icon-sm" onclick="adjDeduct('sport','${side}',-1)">↩</button>
+    </div>`;
+  }).join('');
+  // Equipment bonus
+  const eb = G.equipBonus || 0;
+  document.getElementById('equip-rows').innerHTML = `
+    <div class="score-adj-row">
+      <div class="score-team">${esc(G.awayTeam)} <span style="font-size:11px;color:var(--text3)">(away)</span></div>
+      <button class="btn btn-icon-sm" onclick="adjEquip(-1)">–</button>
+      <div class="score-num" id="edj-away" style="color:${eb>0?'var(--green)':'var(--text2)'}">${eb>0?'+'+eb:'0'}</div>
+      <button class="btn btn-icon-sm btn-green" onclick="adjEquip(1)">+1</button>
+    </div>
+    <div class="score-adj-row">
+      <div class="score-team">${esc(G.homeTeam)} <span style="font-size:11px;color:var(--text3)">(home)</span></div>
+      <div style="flex:1;font-size:12px;color:var(--text3);text-align:right;padding-right:8px">${eb>0?'–'+eb+' applied':'no penalty'}</div>
+    </div>`;
+  renderFinalScore();
+}
+function adjDeduct(type, side, delta) {
+  if (type==='uniform') {
+    if (side==='home') G.homeUniform = Math.max(0,(G.homeUniform||0)+delta);
+    else G.awayUniform = Math.max(0,(G.awayUniform||0)+delta);
+  } else {
+    if (side==='home') G.homeSport = Math.max(0,(G.homeSport||0)+delta);
+    else G.awaySport = Math.max(0,(G.awaySport||0)+delta);
+  }
+  renderDeductions(); saveCurrentGame();
+}
+function adjEquip(delta) {
+  G.equipBonus = Math.max(0,(G.equipBonus||0)+delta);
+  renderDeductions(); saveCurrentGame();
+}
+function calcFinal(side) {
+  const runs = side==='away' ? G.awayScore : G.homeScore;
+  const uniform = side==='away' ? (G.awayUniform||0) : (G.homeUniform||0);
+  const sport = side==='away' ? (G.awaySport||0) : (G.homeSport||0);
+  const equip = side==='away' ? (G.equipBonus||0) : -(G.equipBonus||0);
+  return Math.max(0, runs - uniform - sport + equip);
+}
+function renderFinalScore() {
+  const el = document.getElementById('final-score-rows');
+  if (!el) return;
+  el.innerHTML = ['away','home'].map(side => {
+    const name = side==='away' ? G.awayTeam : G.homeTeam;
+    const runs = side==='away' ? G.awayScore : G.homeScore;
+    const uni = side==='away' ? (G.awayUniform||0) : (G.homeUniform||0);
+    const spt = side==='away' ? (G.awaySport||0) : (G.homeSport||0);
+    const eq = side==='away' ? (G.equipBonus||0) : -(G.equipBonus||0);
+    const final = Math.max(0, runs - uni - spt + eq);
+    const breakdownParts = [];
+    if (uni) breakdownParts.push(`–${uni} uniform`);
+    if (spt) breakdownParts.push(`–${spt} sport`);
+    if (eq>0) breakdownParts.push(`+${eq} equip`);
+    if (eq<0) breakdownParts.push(`${eq} equip`);
+    const breakdown = breakdownParts.length ? `<span style="font-size:12px;color:var(--text3);margin-left:8px">${runs} runs${breakdownParts.map(p=>' '+p).join('')}</span>` : '';
+    return `<div class="score-adj-row" style="border-bottom:0.5px solid var(--line)">
+      <div class="score-team">${esc(name)}</div>
+      ${breakdown}
+      <div style="font-family:'DM Mono',monospace;font-size:28px;font-weight:500;color:var(--accent);min-width:40px;text-align:right">${final}</div>
+    </div>`;
+  }).join('');
 }
 function renderInningGrid() {
   const innings = Array.from({length:MAX_INN},(_,i)=>i+1);
@@ -1032,6 +1303,13 @@ function fileToBase64(file) {
 // ══════════════════════════════════════════
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function toggleCollapse(bodyId, chevronId) {
+  const body = document.getElementById(bodyId);
+  const chev = document.getElementById(chevronId);
+  const open = body.style.display === 'block';
+  body.style.display = open ? 'none' : 'block';
+  if (chev) chev.style.transform = open ? '' : 'rotate(90deg)';
+}
 let toastTimer;
 function toast(msg) {
   const el = document.getElementById('toast');
@@ -1044,8 +1322,30 @@ function esc(s) {
 }
 
 // ══════════════════════════════════════════
+//  THEME
+// ══════════════════════════════════════════
+function applyTheme(theme) {
+  const isLight = theme === 'light';
+  document.body.classList.toggle('light', isLight);
+  const label = isLight ? '🌙 Dark' : '☀️ Light';
+  const metaEl = document.getElementById('theme-meta');
+  if (metaEl) metaEl.content = isLight ? '#f4f6f8' : '#0f1923';
+  ['theme-btn','theme-btn-hist'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = label;
+  });
+  localStorage.setItem('umpire_theme', theme);
+}
+function toggleTheme() {
+  const current = document.body.classList.contains('light') ? 'light' : 'dark';
+  applyTheme(current === 'light' ? 'dark' : 'light');
+}
+
+// ══════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════
+const savedTheme = localStorage.getItem('umpire_theme') || 'dark';
+applyTheme(savedTheme);
 showHistory();
 </script>
 </body>
